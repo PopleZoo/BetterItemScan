@@ -34,7 +34,20 @@ namespace BetterItemScan.Patches
             List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
             string itemList = string.Join("\n", items.Select(item => $"{item.headerText}: ${item.scrapValue}"));
             HudManagerPatch_UI._textMesh.text = itemList;
-            HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+            if (BetterItemScanModBase.ShowOnShipOnly.Value)
+            {
+                if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                {
+                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}";
+                }
+                else
+                {
+                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+                }
+            }
+
+            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+
 
             HudManagerPatch_UI._displayTimeLeft = 5f;
             if (HudManagerPatch_UI._totalCounter.activeSelf)

@@ -40,7 +40,7 @@ namespace BetterItemScan.Patches
 			//fetching private method 'AttemptScanNode'
 			MethodInfo methodInfo = typeof(HUDManager).GetMethod("AttemptScanNode", BindingFlags.NonPublic | BindingFlags.Instance);
 
-			int num = Physics.SphereCastNonAlloc(new Ray(playerScript.gameplayCamera.transform.position + playerScript.gameplayCamera.transform.forward * 20f, playerScript.gameplayCamera.transform.forward), BetterItemScanModBase.Config_ItemScanRadius.Value, _scanNodesHit, maxDistance, 4194304);
+			int num = Physics.SphereCastNonAlloc(new Ray(playerScript.gameplayCamera.transform.position + playerScript.gameplayCamera.transform.forward * 20f, playerScript.gameplayCamera.transform.forward), BetterItemScanModBase.ItemScanRadius.Value, _scanNodesHit, maxDistance, 4194304);
 
 			Vector3 origin = new Vector3(playerScript.gameplayCamera.transform.position.x, playerScript.gameplayCamera.transform.position.y - 2f, playerScript.gameplayCamera.transform.position.z) + playerScript.gameplayCamera.transform.forward;
 			Vector3 direction = playerScript.gameplayCamera.transform.forward;
@@ -53,7 +53,7 @@ namespace BetterItemScan.Patches
 				lineRenderer.SetPosition(0, origin);
 				lineRenderer.SetPosition(1, origin + direction * maxDistance);
 
-				lineRenderer.startWidth = lineRenderer.endWidth = BetterItemScanModBase.Config_ItemScanRadius.Value;
+				lineRenderer.startWidth = lineRenderer.endWidth = BetterItemScanModBase.ItemScanRadius.Value;
 			}
 			if (num > __instance.scanElements.Length)
 			{

@@ -11,3 +11,4 @@ Config options for:
 recent changes
 - no longer being able to peak through walls
 - no random pink square from DebugMode
+- Added config option 'ShowOnShipOnly' that allows you to see the total ship amount only on the ship

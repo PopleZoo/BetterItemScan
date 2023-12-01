@@ -12,14 +12,15 @@ namespace BetterItemScan
     {
         private const string modGUID = "PopleZoo.BetterItemScan";
         private const string modName = "Better Item Scan";
-        private const string modVersion = "1.0.0.1";
+        private const string modVersion = "1.0.0.3";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static BetterItemScanModBase Instance;
         public ManualLogSource mls;
 
         //config variables
-        public static ConfigEntry<float> Config_ItemScanRadius;
+        public static ConfigEntry<float> ItemScanRadius;
         public static ConfigEntry<bool> ShowDebugMode;
+        public static ConfigEntry<bool> ShowOnShipOnly;
         private void Awake()
         {
             if (BetterItemScanModBase.Instance == null) { BetterItemScanModBase.Instance = this; };
@@ -31,7 +32,8 @@ namespace BetterItemScan
         private void LoadConfigs()
         {
             BetterItemScanModBase.ShowDebugMode = Config.Bind("Bool for showing Radius of the scan in game", "Show DebugMode", false, "shows the change in width of the area to scan");
-            BetterItemScanModBase.Config_ItemScanRadius = Config.Bind("Radius for scanning items", "Radius for scanning items", 20f, "The default value is 20");
+            BetterItemScanModBase.ShowOnShipOnly = Config.Bind("Bool for showing the Total Ship amount only on the Ship", "Show On Ship Only", false, "whether or not to show the ship's total just in the ship");
+            BetterItemScanModBase.ItemScanRadius = Config.Bind("Radius for scanning items", "Radius for scanning items", 20f, "The default value is 20");
         }
 
     }
