@@ -8,3 +8,6 @@ Config options for:
 - Allowing changes to the width of the scanner
 
 
+recent changes
+- no longer being able to peak through walls
+- no random pink square from DebugMode
