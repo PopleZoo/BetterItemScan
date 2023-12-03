@@ -36,7 +36,7 @@ namespace BetterItemScan.Patches
             List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
             meetQuotaItemNames.Clear();
             int quota = TimeOfDay.Instance.profitQuota;
-            items = items.OrderByDescending(item => item.scrapValue).ToList();
+            items = items.OrderBy(item => item.scrapValue).ToList();
             int totalScrapValue = 0;
             foreach (var item in items)
             {
@@ -50,8 +50,6 @@ namespace BetterItemScan.Patches
                 }
                 else break;
             }
-            if (totalScrapValue < quota)
-                meetQuotaItemNames.Clear();
 
             string itemList = string.Join("\n", items.Select(item => BetterItemScanModBase.CalculateForQuota.Value ? (meetQuotaItemNames.Contains(item.headerText) ? "* " + item.headerText : item.headerText) + $": ${item.scrapValue}" : $"{item.headerText}: ${item.scrapValue}"));
             HudManagerPatch_UI._textMesh.text = itemList;
@@ -104,9 +102,10 @@ namespace BetterItemScan.Patches
             if (!(bool)(UnityEngine.Object)gameObject)
                 BetterItemScanModBase.Instance.mls.LogError((object)"Failed to find ValueCounter object to copy!");
             HudManagerPatch_UI._totalCounter = UnityEngine.Object.Instantiate<GameObject>(gameObject.gameObject, gameObject.transform.parent, false);
-            HudManagerPatch_UI._totalCounter.transform.Translate(0.0f, -60f, 0.0f);
             Vector3 localPosition = HudManagerPatch_UI._totalCounter.transform.localPosition;
-            HudManagerPatch_UI._totalCounter.transform.localPosition = new Vector3(localPosition.x + 50f, -100f, localPosition.z);
+            float adjustedX = Mathf.Clamp(localPosition.x + BetterItemScanModBase.AdjustScreenPositionXaxis.Value + 50f, -6000f, Screen.width);
+            float adjustedY = Mathf.Clamp(localPosition.y + BetterItemScanModBase.AdjustScreenPositionYaxis.Value - 80f, -6000f, Screen.height);
+            HudManagerPatch_UI._totalCounter.transform.localPosition = new Vector3(adjustedX, adjustedY, localPosition.z);
             HudManagerPatch_UI._textMesh = HudManagerPatch_UI._totalCounter.GetComponentInChildren<TextMeshProUGUI>();
 
             // Set the anchor and pivot of the text's RectTransform to the top of the parent on the y-axis and center on the x-axis
@@ -120,6 +119,10 @@ namespace BetterItemScan.Patches
             Vector3 textLocalPosition = textRectTransform.localPosition;
             textRectTransform.localPosition = new Vector3(textLocalPosition.x, textLocalPosition.y - 140f, textLocalPosition.z);
         }
+
+
+
+
 
     }
 }

@@ -19,6 +19,8 @@ namespace BetterItemScan
 
         //config variables
         public static ConfigEntry<float> ItemScanRadius;
+        public static ConfigEntry<float> AdjustScreenPositionXaxis;
+        public static ConfigEntry<float> AdjustScreenPositionYaxis;
         public static ConfigEntry<bool> ShowDebugMode;
         public static ConfigEntry<bool> ShowOnShipOnly;
         public static ConfigEntry<bool> CalculateForQuota;
@@ -32,10 +34,12 @@ namespace BetterItemScan
         }
         private void LoadConfigs()
         {
-            BetterItemScanModBase.ShowDebugMode = Config.Bind("Bool for showing Radius of the scan in game", "Show DebugMode", false, "shows the change in width of the area to scan");
-            BetterItemScanModBase.ShowOnShipOnly = Config.Bind("Bool for showing the Total Ship amount only on the Ship", "Show On Ship Only", false, "whether or not to show the ship's total just in the ship");
-            BetterItemScanModBase.CalculateForQuota = Config.Bind("Bool for showing the which scanned items will meet the quota, if your scanned items meet the quota an '*' will mark it", "Calculate For Quota", false, "whether or not to calculate scanned items to see which meet the quota");
-            BetterItemScanModBase.ItemScanRadius = Config.Bind("Radius for scanning items", "Radius for scanning items", 20f, "The default value is 20");
+            BetterItemScanModBase.ShowDebugMode = Config.Bind("Settings", "ShowDebugMode", false, "Shows the change in width of the area to scan");
+            BetterItemScanModBase.ShowOnShipOnly = Config.Bind("Settings", "ShowOnShipOnly", false, "Whether or not to show the ship's total just in the ship");
+            BetterItemScanModBase.CalculateForQuota = Config.Bind("Settings", "CalculateForQuota", false, "Whether or not to calculate scanned items to see which meet the quota");
+            BetterItemScanModBase.ItemScanRadius = Config.Bind("Settings", "ItemScanRadius", 20f, "The default value is 20");
+            BetterItemScanModBase.AdjustScreenPositionXaxis = Config.Bind("Settings", "AdjustScreenPositionXaxis", 0f, "The default value is 0, you will add or take away from its original position");
+            BetterItemScanModBase.AdjustScreenPositionYaxis = Config.Bind("Settings", "AdjustScreenPositionYaxis", 0f, "The default value is 0, you will add or take away from its original position");
         }
 
     }
