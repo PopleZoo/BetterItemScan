@@ -38,20 +38,43 @@ namespace BetterItemScan.Patches
             int quota = TimeOfDay.Instance.profitQuota;
             items = items.OrderBy(item => item.scrapValue).ToList();
             int totalScrapValue = 0;
-            foreach (var item in items)
+            bool hasGoneOverQuota=false;
+            for (int i = 0; i < items.Count; i++)
             {
-                if (totalScrapValue + item.scrapValue <= quota)
+                if (totalScrapValue + items[i].scrapValue <= quota)
                 {
-                    totalScrapValue += item.scrapValue;
-                    if (!item.headerText.Contains(TickLabel))
+                    totalScrapValue += items[i].scrapValue;
+                    if (!items[i].headerText.Contains(TickLabel))
                     {
-                        meetQuotaItemNames.Add(item.headerText);
+                        meetQuotaItemNames.Add(items[i].headerText);
                     }
+                    Debug.Log(totalScrapValue + meetQuotaItemNames[i]);
+                }
+                else if (!hasGoneOverQuota && quota > totalScrapValue)
+                {
+                    hasGoneOverQuota = true;
+                    totalScrapValue += items[i].scrapValue;
+                    if (!items[i].headerText.Contains(TickLabel))
+                    {
+                        meetQuotaItemNames.Add(items[i].headerText);
+                    }
+                    Debug.Log(totalScrapValue + meetQuotaItemNames[i]);
+
                 }
                 else break;
             }
 
-            string itemList = string.Join("\n", items.Select(item => BetterItemScanModBase.CalculateForQuota.Value ? (meetQuotaItemNames.Contains(item.headerText) ? "* " + item.headerText : item.headerText) + $": ${item.scrapValue}" : $"{item.headerText}: ${item.scrapValue}"));
+            string itemList = "";
+            foreach (var item in items)
+            {
+                string itemText = $"{item.headerText}: ${item.scrapValue}";
+                if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
+                {
+                    meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
+                    itemText = "* " + itemText;
+                }
+                itemList += itemText + "\n";
+            }
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowOnShipOnly.Value)
             {
