@@ -23,6 +23,8 @@ namespace BetterItemScan.Patches
         private const float DisplayTime = 5f;
 
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
+        public static List<string> meetQuotaItemNames = new List<string>();
+        public static string TickLabel = ((char)0x221A).ToString();
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(HUDManager), "PingScan_performed")]
@@ -32,7 +34,26 @@ namespace BetterItemScan.Patches
                 HudManagerPatch_UI.CopyValueCounter();
 
             List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
-            string itemList = string.Join("\n", items.Select(item => $"{item.headerText}: ${item.scrapValue}"));
+            meetQuotaItemNames.Clear();
+            int quota = TimeOfDay.Instance.profitQuota;
+            items = items.OrderByDescending(item => item.scrapValue).ToList();
+            int totalScrapValue = 0;
+            foreach (var item in items)
+            {
+                if (totalScrapValue + item.scrapValue <= quota)
+                {
+                    totalScrapValue += item.scrapValue;
+                    if (!item.headerText.Contains(TickLabel))
+                    {
+                        meetQuotaItemNames.Add(item.headerText);
+                    }
+                }
+                else break;
+            }
+            if (totalScrapValue < quota)
+                meetQuotaItemNames.Clear();
+
+            string itemList = string.Join("\n", items.Select(item => BetterItemScanModBase.CalculateForQuota.Value ? (meetQuotaItemNames.Contains(item.headerText) ? "* " + item.headerText : item.headerText) + $": ${item.scrapValue}" : $"{item.headerText}: ${item.scrapValue}"));
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowOnShipOnly.Value)
             {
@@ -45,6 +66,7 @@ namespace BetterItemScan.Patches
                     HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
                 }
             }
+            
 
             else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
 
