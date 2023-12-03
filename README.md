@@ -11,7 +11,11 @@ Config options for:
 - 'AdjustScreenPositionXaxis' & 'AdjustScreenPositionYaxis' are to help adjust the ui on the screen's position (recommend adjutments for ultrawide users or also downloading the ultrawide mod)
 
 recent changes
-- no longer being able to peak through walls
-- no random pink square from DebugMode
 - Added config option 'ShowOnShipOnly'
 - Added config option 'CalculateForQuota'
+
+
+Small bug fixes
+- no longer being able to peak through walls
+- no random pink square from DebugMode
+- not calculating scrapvalue properlly to meet the quota

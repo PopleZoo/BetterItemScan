@@ -48,7 +48,6 @@ namespace BetterItemScan.Patches
                     {
                         meetQuotaItemNames.Add(items[i].headerText);
                     }
-                    Debug.Log(totalScrapValue + meetQuotaItemNames[i]);
                 }
                 else if (!hasGoneOverQuota && quota > totalScrapValue)
                 {
@@ -58,7 +57,6 @@ namespace BetterItemScan.Patches
                     {
                         meetQuotaItemNames.Add(items[i].headerText);
                     }
-                    Debug.Log(totalScrapValue + meetQuotaItemNames[i]);
 
                 }
                 else break;
@@ -68,7 +66,7 @@ namespace BetterItemScan.Patches
             foreach (var item in items)
             {
                 string itemText = $"{item.headerText}: ${item.scrapValue}";
-                if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
+                if (BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
                 {
                     meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
                     itemText = "* " + itemText;
