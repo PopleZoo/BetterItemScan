@@ -22,6 +22,7 @@ namespace BetterItemScan
         public static ConfigEntry<float> AdjustScreenPositionXaxis;
         public static ConfigEntry<float> AdjustScreenPositionYaxis;
         public static ConfigEntry<bool> ShowDebugMode;
+        public static ConfigEntry<bool> ShowTotalOnShipOnly;
         public static ConfigEntry<bool> ShowOnShipOnly;
         public static ConfigEntry<bool> CalculateForQuota;
         private void Awake()
@@ -35,7 +36,8 @@ namespace BetterItemScan
         private void LoadConfigs()
         {
             BetterItemScanModBase.ShowDebugMode = Config.Bind("Settings", "ShowDebugMode", false, "Shows the change in width of the area to scan");
-            BetterItemScanModBase.ShowOnShipOnly = Config.Bind("Settings", "ShowOnShipOnly", false, "Whether or not to show the ship's total just in the ship");
+            BetterItemScanModBase.ShowTotalOnShipOnly = Config.Bind("Settings", "ShowTotalOnShipOnly", false, "Whether or not to show the ship's total just in the ship");
+            BetterItemScanModBase.ShowOnShipOnly = Config.Bind("Settings", "ShowOnShipOnly", false, "Whether or not to show the ship's total scanned just in the ship");
             BetterItemScanModBase.CalculateForQuota = Config.Bind("Settings", "CalculateForQuota", false, "Whether or not to calculate scanned items to see which meet the quota");
             BetterItemScanModBase.ItemScanRadius = Config.Bind("Settings", "ItemScanRadius", 20f, "The default value is 20");
             BetterItemScanModBase.AdjustScreenPositionXaxis = Config.Bind("Settings", "AdjustScreenPositionXaxis", 0f, "The default value is 0, you will add or take away from its original position");

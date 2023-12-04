@@ -36,7 +36,7 @@ namespace BetterItemScan.Patches
             List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
             meetQuotaItemNames.Clear();
             int quota = TimeOfDay.Instance.profitQuota;
-            items = items.OrderBy(item => item.scrapValue).ToList();
+            items = items.OrderByDescending(item => item.scrapValue).ToList();
             int totalScrapValue = 0;
             bool hasGoneOverQuota=false;
             for (int i = 0; i < items.Count; i++)
@@ -74,7 +74,7 @@ namespace BetterItemScan.Patches
                 itemList += itemText + "\n";
             }
             HudManagerPatch_UI._textMesh.text = itemList;
-            if (BetterItemScanModBase.ShowOnShipOnly.Value)
+            if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
             {
                 if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
                 {
@@ -85,10 +85,23 @@ namespace BetterItemScan.Patches
                     HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
                 }
             }
-            
-
             else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
 
+            if (BetterItemScanModBase.ShowOnShipOnly.Value)
+            {
+                if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                {
+                    HudManagerPatch_UI._textMesh.gameObject.SetActive(false);
+                    __instance.totalValueText.transform.parent.gameObject.SetActive(true);
+                }
+                else
+                {
+                    HudManagerPatch_UI._textMesh.gameObject.SetActive(true);
+                    __instance.totalValueText.transform.parent.gameObject.SetActive(false);
+
+                }
+            }
+            
 
             HudManagerPatch_UI._displayTimeLeft = 5f;
             if (HudManagerPatch_UI._totalCounter.activeSelf)
