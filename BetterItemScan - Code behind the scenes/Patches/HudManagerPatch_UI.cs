@@ -25,6 +25,52 @@ namespace BetterItemScan.Patches
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
         public static List<string> meetQuotaItemNames = new List<string>();
         public static string TickLabel = ((char)0x221A).ToString();
+        public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
+
+        public static int MeetQuota(List<int> items, int quota)
+        {
+            // Filter out items that are smaller than the quota
+            items = items.Where(item => item >= quota).ToList();
+
+            // If no items are left, return -1 to indicate that no item can meet the quota
+            if (!items.Any())
+            {
+                return -1;
+            }
+
+            // Subtract each item from the quota and return the item that results in the smallest non-negative difference
+            return items.Aggregate((a, b) => Math.Abs(quota - a) < Math.Abs(quota - b) ? a : b);
+        }
+
+        public static List<List<int>> FindCombinations(List<int> items, int quota)
+        {
+            List<List<int>> results = new List<List<int>>();
+            int n = items.Count;
+
+            // Generate all subsets of the items
+            for (int i = 0; i < (1 << n); i++)
+            {
+                List<int> subset = new List<int>();
+                for (int j = 0; j < n; j++)
+                {
+                    if ((i & (1 << j)) > 0)
+                    {
+                        subset.Add(items[j]);
+                    }
+                }
+
+                // If the sum of the subset equals the quota, add it to the results
+                if (subset.Sum<int>((Func<int, int>)(scrap => scrap)) == quota)
+                {
+                    results.Add(subset);
+                }
+            }
+
+            // Sort the results by the size of the combination, ascending
+            results.Sort((a, b) => a.Count.CompareTo(b.Count));
+
+            return results;
+        }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(HUDManager), "PingScan_performed")]
@@ -35,44 +81,71 @@ namespace BetterItemScan.Patches
 
             List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
             meetQuotaItemNames.Clear();
-            int quota = TimeOfDay.Instance.profitQuota;
-            items = items.OrderByDescending(item => item.scrapValue).ToList();
-            int totalScrapValue = 0;
-            bool hasGoneOverQuota=false;
-            for (int i = 0; i < items.Count; i++)
+            foreach (var item in items)
             {
-                if (totalScrapValue + items[i].scrapValue <= quota)
-                {
-                    totalScrapValue += items[i].scrapValue;
-                    if (!items[i].headerText.Contains(TickLabel))
-                    {
-                        meetQuotaItemNames.Add(items[i].headerText);
-                    }
-                }
-                else if (!hasGoneOverQuota && quota > totalScrapValue)
-                {
-                    hasGoneOverQuota = true;
-                    totalScrapValue += items[i].scrapValue;
-                    if (!items[i].headerText.Contains(TickLabel))
-                    {
-                        meetQuotaItemNames.Add(items[i].headerText);
-                    }
-
-                }
-                else break;
+                ItemsDictionary.Add(item, item.scrapValue);
             }
 
+            int quota = TimeOfDay.Instance.profitQuota;
+            List<int> itemsValues = ItemsDictionary.Values.ToList();
+            itemsValues.Sort();
+            itemsValues.Reverse();
+            int bestIndividualItem = MeetQuota(itemsValues, quota);
+            List<List<int>> bestCombinations = FindCombinations(itemsValues, quota);
+                        foreach (List<int> combination in bestCombinations)
+            {
+                Debug.Log(string.Join(", ", combination));
+            }
+
+            // Compare the best individual item to the best combinations
+            if (bestIndividualItem != -1 && bestCombinations.Any())
+            {
+                int bestCombinationSum = bestCombinations.First().Sum();
+                int diffIndividual = Math.Abs(quota - bestIndividualItem);
+                int diffCombination = Math.Abs(quota - bestCombinationSum);
+
+                if (diffIndividual < diffCombination)
+                {
+                    ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
+                    if (key != null)
+                    {
+                        meetQuotaItemNames.Add(key.headerText);
+                    }
+                }
+                else if (diffIndividual > diffCombination)
+                {
+                    foreach (int item in bestCombinations.First())
+                    {
+                        ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == item).Key;
+                        if (key != null)
+                        {
+                            meetQuotaItemNames.Add(key.headerText);
+                        }
+                    }
+
+                }
+            }
+            else
+            {
+                ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
+                if (key != null)
+                {
+                    meetQuotaItemNames.Add(key.headerText);
+                }
+            }
+            ItemsDictionary.Clear();
             string itemList = "";
             foreach (var item in items)
             {
                 string itemText = $"{item.headerText}: ${item.scrapValue}";
-                if (BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
+                if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
                 {
                     meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
                     itemText = "* " + itemText;
                 }
                 itemList += itemText + "\n";
             }
+
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
             {

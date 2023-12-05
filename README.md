@@ -21,3 +21,4 @@ Small bug fixes
 - no longer being able to peak through walls
 - no random pink square from DebugMode
 - not calculating scrapvalue properlly to meet the quota
+- Made the calculating of scrap smarter, added braincells to the scanner
