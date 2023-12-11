@@ -28,8 +28,8 @@ namespace BetterItemScan.Patches
 				lineObject.SetActive(false);
 			}
 
-			//fetching Private Vars associated with this method
-			FieldInfo fieldInfo_1 = typeof(HUDManager).GetField("nodesOnScreen", BindingFlags.NonPublic | BindingFlags.Instance);
+            //fetching Private Vars associated with this method
+            FieldInfo fieldInfo_1 = typeof(HUDManager).GetField("nodesOnScreen", BindingFlags.NonPublic | BindingFlags.Instance);
 			var _nodesOnScreen = fieldInfo_1.GetValue(__instance) as List<ScanNodeProperties>;
 
 			FieldInfo fieldInfo_2 = typeof(HUDManager).GetField("scannedScrapNum", BindingFlags.NonPublic | BindingFlags.Instance);

@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,14 +18,11 @@ namespace BetterItemScan.Patches
     {
         private static GameObject _totalCounter;
         private static TextMeshProUGUI _textMesh;
-        private static float _displayTimeLeft;
+        private static float _displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
         private static float Totalsum;
         private static float Totalship;
-        private const float DisplayTime = 5f;
-
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
         public static List<string> meetQuotaItemNames = new List<string>();
-        public static string TickLabel = ((char)0x221A).ToString();
         public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
 
         public static int MeetQuota(List<int> items, int quota)
@@ -46,6 +44,7 @@ namespace BetterItemScan.Patches
         {
             List<List<int>> results = new List<List<int>>();
             int n = items.Count;
+            int bestSumDifference = int.MaxValue;
 
             // Generate all subsets of the items
             for (int i = 0; i < (1 << n); i++)
@@ -59,8 +58,18 @@ namespace BetterItemScan.Patches
                     }
                 }
 
-                // If the sum of the subset equals the quota, add it to the results
-                if (subset.Sum<int>((Func<int, int>)(scrap => scrap)) == quota)
+                // Calculate the sum of the subset
+                int subsetSum = subset.Sum();
+
+                // If the sum of the subset is close to the quota, update the best result
+                int sumDifference = Math.Abs(quota - subsetSum);
+                if (sumDifference < bestSumDifference)
+                {
+                    bestSumDifference = sumDifference;
+                    results.Clear();
+                    results.Add(subset);
+                }
+                else if (sumDifference == bestSumDifference)
                 {
                     results.Add(subset);
                 }
@@ -72,51 +81,63 @@ namespace BetterItemScan.Patches
             return results;
         }
 
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(HUDManager), "PingScan_performed")]
         private static void OnScan(HUDManager __instance, InputAction.CallbackContext context)
         {
+            FieldInfo fieldInfo_2 = typeof(HUDManager).GetField("playerPingingScan", BindingFlags.NonPublic | BindingFlags.Instance);
+            var playerPingingScan = (float)fieldInfo_2.GetValue(__instance);
+
+            MethodInfo methodInfo = typeof(HUDManager).GetMethod("CanPlayerScan", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if ((UnityEngine.Object)GameNetworkManager.Instance.localPlayerController == (UnityEngine.Object)null || !context.performed || !(bool)methodInfo.Invoke(__instance,null) || (double)playerPingingScan > -1.0)
+                return;
             if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._totalCounter)
-                HudManagerPatch_UI.CopyValueCounter();
-
-            List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
-            meetQuotaItemNames.Clear();
-            foreach (var item in items)
-            {
-                ItemsDictionary.Add(item, item.scrapValue);
-            }
-
-            int quota = TimeOfDay.Instance.profitQuota;
-            List<int> itemsValues = ItemsDictionary.Values.ToList();
-            itemsValues.Sort();
-            itemsValues.Reverse();
-            int bestIndividualItem = MeetQuota(itemsValues, quota);
-            List<List<int>> bestCombinations = FindCombinations(itemsValues, quota);
-                        foreach (List<int> combination in bestCombinations)
-            {
-                Debug.Log(string.Join(", ", combination));
-            }
-
-            // Compare the best individual item to the best combinations
-            if (bestIndividualItem != -1 && bestCombinations.Any())
-            {
-                int bestCombinationSum = bestCombinations.First().Sum();
-                int diffIndividual = Math.Abs(quota - bestIndividualItem);
-                int diffCombination = Math.Abs(quota - bestCombinationSum);
-
-                if (diffIndividual < diffCombination)
+                    HudManagerPatch_UI.CopyValueCounter();
+                List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
+                meetQuotaItemNames.Clear();
+                foreach (var item in items)
                 {
-                    ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
-                    if (key != null)
-                    {
-                        meetQuotaItemNames.Add(key.headerText);
-                    }
+                    ItemsDictionary.Add(item, item.scrapValue);
                 }
-                else if (diffIndividual > diffCombination)
+
+                int quota = TimeOfDay.Instance.profitQuota;
+                List<int> itemsValues = ItemsDictionary.Values.ToList();
+                itemsValues.Sort();
+                itemsValues.Reverse();
+                int bestIndividualItem = MeetQuota(itemsValues, quota);
+                List<List<int>> bestCombinations = FindCombinations(itemsValues, quota);
+
+                foreach (List<int> combination in bestCombinations)
                 {
-                    foreach (int item in bestCombinations.First())
+                    Debug.Log(string.Join(", ", combination));
+                }
+
+                // Compare the best individual item to the best combinations
+                if (bestIndividualItem != -1 && bestCombinations.Any())
+                {
+                    int bestCombinationSum = bestCombinations.First().Sum();
+                    //Debug.Log($"Best Individual Item: {bestIndividualItem}");
+                    //Debug.Log($"Best Combination Sum: {bestCombinationSum}");
+
+                    // Determine the winner based on the difference between individual item and combination sum
+                    int selectedValue = -1;
+
+                    if (Math.Abs(quota - bestIndividualItem) <= Math.Abs(quota - bestCombinationSum))
                     {
-                        ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == item).Key;
+                        selectedValue = bestIndividualItem;
+                    }
+                    else if (bestCombinations.Any())
+                    {
+                        // Select the first item in the best combination (you may want to refine the selection logic)
+                        selectedValue = bestCombinations.First().First();
+                    }
+
+                    // Add the selected item to the meetQuotaItemNames list
+                    if (selectedValue != -1)
+                    {
+                        ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == selectedValue).Key;
                         if (key != null)
                         {
                             meetQuotaItemNames.Add(key.headerText);
@@ -124,62 +145,64 @@ namespace BetterItemScan.Patches
                     }
 
                 }
-            }
-            else
-            {
-                ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
-                if (key != null)
+                else if (bestIndividualItem != -1)
                 {
-                    meetQuotaItemNames.Add(key.headerText);
+                    // No valid combinations, consider the best individual item
+                    ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
+                    if (key != null)
+                    {
+                        meetQuotaItemNames.Add(key.headerText);
+                    }
                 }
-            }
-            ItemsDictionary.Clear();
-            string itemList = "";
-            foreach (var item in items)
-            {
-                string itemText = $"{item.headerText}: ${item.scrapValue}";
-                if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
-                {
-                    meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
-                    itemText = "* " + itemText;
-                }
-                itemList += itemText + "\n";
-            }
 
-            HudManagerPatch_UI._textMesh.text = itemList;
-            if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
-            {
-                if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                ItemsDictionary.Clear();
+                string itemList = "";
+                foreach (var item in items)
                 {
-                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}";
+                    string itemText = $"{item.headerText}: ${item.scrapValue}";
+                    if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
+                    {
+                        meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
+                        itemText = "* " + itemText;
+                    }
+                    itemList += itemText + "\n";
                 }
-                else
-                {
-                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
-                }
-            }
-            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
 
-            if (BetterItemScanModBase.ShowOnShipOnly.Value)
-            {
-                if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                HudManagerPatch_UI._textMesh.text = itemList;
+                if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
                 {
-                    HudManagerPatch_UI._textMesh.gameObject.SetActive(false);
-                    __instance.totalValueText.transform.parent.gameObject.SetActive(true);
+                    if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                    {
+                        HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}";
+                    }
+                    else
+                    {
+                        HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+                    }
                 }
-                else
-                {
-                    HudManagerPatch_UI._textMesh.gameObject.SetActive(true);
-                    __instance.totalValueText.transform.parent.gameObject.SetActive(false);
+                else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
 
+                if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
+                {
+                    if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                    {
+                        HudManagerPatch_UI._textMesh.gameObject.SetActive(false);
+                        __instance.totalValueText.transform.parent.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        HudManagerPatch_UI._textMesh.gameObject.SetActive(true);
+                        __instance.totalValueText.transform.parent.gameObject.SetActive(false);
+
+                    }
                 }
-            }
+
+
+                HudManagerPatch_UI._displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
+                if (HudManagerPatch_UI._totalCounter.activeSelf)
+                    return;
+                GameNetworkManager.Instance.StartCoroutine(HudManagerPatch_UI.ValueCoroutine());
             
-
-            HudManagerPatch_UI._displayTimeLeft = 5f;
-            if (HudManagerPatch_UI._totalCounter.activeSelf)
-                return;
-            GameNetworkManager.Instance.StartCoroutine(HudManagerPatch_UI.ValueCoroutine());
         }
 
         private static List<ScanNodeProperties> CalculateLootItems()
