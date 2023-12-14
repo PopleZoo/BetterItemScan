@@ -1,6 +1,6 @@
 # BetterItemScan
 
-Better Item Scan is a mod for the game Lethal Company, it makes it easier to scan a group of items to see the price of each of them listed, as well as their combined total
+Better Item Scan is a mod for the game Lethal Company, it makes it easier to scan a group of items to see the price of each of them listed, as well as their combined total and calculates which items meet the quoata
 
 Config options for:
 
@@ -24,3 +24,4 @@ Small bug fixes
 - not calculating scrapvalue properlly to meet the quota
 - made the calculating of scrap smarter, added braincells to the scanner
 - forced the calculator to go to school to become smarter
+- the calculator has been tutored

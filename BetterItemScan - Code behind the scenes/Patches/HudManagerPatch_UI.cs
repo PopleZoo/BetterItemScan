@@ -109,53 +109,44 @@ namespace BetterItemScan.Patches
                 int bestIndividualItem = MeetQuota(itemsValues, quota);
                 List<List<int>> bestCombinations = FindCombinations(itemsValues, quota);
 
-                foreach (List<int> combination in bestCombinations)
+            // Compare the best individual item to the best combinations
+            if (bestCombinations.Any())
+            {
+                int bestCombinationSum = bestCombinations.First().Sum();
+                Debug.Log($"Best Individual Item: {bestIndividualItem}");
+                Debug.Log($"Best Combination Sum: {bestCombinationSum}");
+
+                if (Math.Abs(quota - bestIndividualItem) <= Math.Abs(quota - bestCombinationSum))
                 {
-                    Debug.Log(string.Join(", ", combination));
-                }
-
-                // Compare the best individual item to the best combinations
-                if (bestIndividualItem != -1 && bestCombinations.Any())
-                {
-                    int bestCombinationSum = bestCombinations.First().Sum();
-                    //Debug.Log($"Best Individual Item: {bestIndividualItem}");
-                    //Debug.Log($"Best Combination Sum: {bestCombinationSum}");
-
-                    // Determine the winner based on the difference between individual item and combination sum
-                    int selectedValue = -1;
-
-                    if (Math.Abs(quota - bestIndividualItem) <= Math.Abs(quota - bestCombinationSum))
-                    {
-                        selectedValue = bestIndividualItem;
-                    }
-                    else if (bestCombinations.Any())
-                    {
-                        // Select the first item in the best combination (you may want to refine the selection logic)
-                        selectedValue = bestCombinations.First().First();
-                    }
-
                     // Add the selected item to the meetQuotaItemNames list
-                    if (selectedValue != -1)
+                    if (bestIndividualItem != -1)
                     {
-                        ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == selectedValue).Key;
+                        ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
                         if (key != null)
                         {
                             meetQuotaItemNames.Add(key.headerText);
                         }
                     }
-
                 }
-                else if (bestIndividualItem != -1)
+                else
                 {
-                    // No valid combinations, consider the best individual item
-                    ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
-                    if (key != null)
+                    // Add only the items used in the best combination to the meetQuotaItemNames list
+                    foreach (int combination in bestCombinations.First())
                     {
-                        meetQuotaItemNames.Add(key.headerText);
+                        Debug.Log(string.Join(", ", combination));
+
+                        ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == combination).Key;
+                        if (key != null)
+                        {
+                            meetQuotaItemNames.Add(key.headerText);
+                        }
                     }
                 }
+            }
 
-                ItemsDictionary.Clear();
+
+
+            ItemsDictionary.Clear();
                 string itemList = "";
                 foreach (var item in items)
                 {
