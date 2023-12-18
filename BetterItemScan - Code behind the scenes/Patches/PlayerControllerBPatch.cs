@@ -66,8 +66,12 @@ namespace BetterItemScan.Patches
 				for (int i = 0; i < num; i++)
 				{
 					ScanNodeProperties component = _scanNodesHit[i].transform.gameObject.GetComponent<ScanNodeProperties>();
-					HudManagerPatch_UI.scannedNodeObjects.Add(component);
-					if (component.nodeType == 1 || component.nodeType == 2)
+					GrabbableObject GrabbableObjectcomponent = _scanNodesHit[i].transform.parent.gameObject.GetComponent<GrabbableObject>();
+					if (GrabbableObjectcomponent.itemProperties.isScrap)
+					{
+                        HudManagerPatch_UI.scannedNodeObjects.Add(component);
+                    }
+                    if (component.nodeType == 1 || component.nodeType == 2)
 					{
 						object[] parameters = { component, i, playerScript };
 						methodInfo.Invoke(__instance, parameters);

@@ -25,3 +25,6 @@ Small bug fixes
 - made the calculating of scrap smarter, added braincells to the scanner
 - forced the calculator to go to school to become smarter
 - the calculator has been tutored
+
+
+Bugs and errors? Head to the Lethal Compnay Discord -> Mod releases -> Better Item Scan
