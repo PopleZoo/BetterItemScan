@@ -19,8 +19,8 @@ namespace BetterItemScan.Patches
         private static GameObject _totalCounter;
         private static TextMeshProUGUI _textMesh;
         private static float _displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
-        private static float Totalsum;
-        private static float Totalship;
+        private static float Totalsum=0;
+        private static float Totalship=0;
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
         public static List<string> meetQuotaItemNames = new List<string>();
         public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
@@ -95,14 +95,17 @@ namespace BetterItemScan.Patches
                 return;
             if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._totalCounter)
                     HudManagerPatch_UI.CopyValueCounter();
-                List<ScanNodeProperties> items = CalculateLootItems(); // Get the list of items
+            if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._textMesh)
+                HudManagerPatch_UI._textMesh = new TextMeshProUGUI();
+
+            List<ScanNodeProperties> items = CalculateLootItems();
                 meetQuotaItemNames.Clear();
                 foreach (var item in items)
                 {
                     ItemsDictionary.Add(item, item.scrapValue);
                 }
 
-                int quota = TimeOfDay.Instance.profitQuota;
+                int quota = TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled;
                 List<int> itemsValues = ItemsDictionary.Values.ToList();
                 itemsValues.Sort();
                 itemsValues.Reverse();
@@ -113,8 +116,6 @@ namespace BetterItemScan.Patches
             if (bestCombinations.Any())
             {
                 int bestCombinationSum = bestCombinations.First().Sum();
-                Debug.Log($"Best Individual Item: {bestIndividualItem}");
-                Debug.Log($"Best Combination Sum: {bestCombinationSum}");
 
                 if (Math.Abs(quota - bestIndividualItem) <= Math.Abs(quota - bestCombinationSum))
                 {
@@ -133,8 +134,6 @@ namespace BetterItemScan.Patches
                     // Add only the items used in the best combination to the meetQuotaItemNames list
                     foreach (int combination in bestCombinations.First())
                     {
-                        Debug.Log(string.Join(", ", combination));
-
                         ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == combination).Key;
                         if (key != null)
                         {
@@ -144,56 +143,53 @@ namespace BetterItemScan.Patches
                 }
             }
 
-
-
             ItemsDictionary.Clear();
-                string itemList = "";
-                foreach (var item in items)
+            string itemList = "";
+            foreach (var item in items)
+            {
+                string itemText = $"{item.headerText}: ${item.scrapValue}";
+                if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
                 {
-                    string itemText = $"{item.headerText}: ${item.scrapValue}";
-                    if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
-                    {
-                        meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
-                        itemText = "* " + itemText;
-                    }
-                    itemList += itemText + "\n";
+                    meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
+                    itemText = "* " + itemText;
                 }
+                itemList += itemText + "\n";
+            }
 
-                HudManagerPatch_UI._textMesh.text = itemList;
-                if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
+            HudManagerPatch_UI._textMesh.text = itemList;
+            if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
+            {
+                if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
                 {
-                    if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
-                    {
-                        HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}";
-                    }
-                    else
-                    {
-                        HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
-                    }
+                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}";
                 }
-                else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
-
-                if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
+                else
                 {
-                    if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
-                    {
-                        HudManagerPatch_UI._textMesh.gameObject.SetActive(false);
-                        __instance.totalValueText.transform.parent.gameObject.SetActive(true);
-                    }
-                    else
-                    {
-                        HudManagerPatch_UI._textMesh.gameObject.SetActive(true);
-                        __instance.totalValueText.transform.parent.gameObject.SetActive(false);
-
-                    }
+                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
                 }
+            }
+            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+                        
+            if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
+            {
+                if (!GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom)
+                {
+                    HudManagerPatch_UI._textMesh.gameObject.SetActive(false);
+                    __instance.totalValueText.transform.parent.gameObject.SetActive(true);
+                }
+                else
+                {
+                    HudManagerPatch_UI._textMesh.gameObject.SetActive(true);
+                    __instance.totalValueText.transform.parent.gameObject.SetActive(false);
+
+                }
+            }
 
 
-                HudManagerPatch_UI._displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
-                if (HudManagerPatch_UI._totalCounter.activeSelf)
-                    return;
-                GameNetworkManager.Instance.StartCoroutine(HudManagerPatch_UI.ValueCoroutine());
-            
+            HudManagerPatch_UI._displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
+            if (HudManagerPatch_UI._totalCounter.activeSelf)
+                return;
+            GameNetworkManager.Instance.StartCoroutine(HudManagerPatch_UI.ValueCoroutine());
         }
 
         private static List<ScanNodeProperties> CalculateLootItems()
@@ -228,6 +224,9 @@ namespace BetterItemScan.Patches
             float adjustedY = Mathf.Clamp(localPosition.y + BetterItemScanModBase.AdjustScreenPositionYaxis.Value - 80f, -6000f, Screen.height);
             HudManagerPatch_UI._totalCounter.transform.localPosition = new Vector3(adjustedX, adjustedY, localPosition.z);
             HudManagerPatch_UI._textMesh = HudManagerPatch_UI._totalCounter.GetComponentInChildren<TextMeshProUGUI>();
+            HudManagerPatch_UI._textMesh.fontSizeMin = 5f;
+            HudManagerPatch_UI._textMesh.fontSize = BetterItemScanModBase.FontSize.Value;//should ideally be on start or something but oh well
+            HudManagerPatch_UI._textMesh.ForceMeshUpdate();
 
             // Set the anchor and pivot of the text's RectTransform to the top of the parent on the y-axis and center on the x-axis
             HudManagerPatch_UI._textMesh.alignment = TextAlignmentOptions.BottomLeft;

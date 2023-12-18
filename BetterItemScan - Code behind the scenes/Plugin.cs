@@ -22,6 +22,7 @@ namespace BetterItemScan
         public static ConfigEntry<float> AdjustScreenPositionXaxis;
         public static ConfigEntry<float> AdjustScreenPositionYaxis;
         public static ConfigEntry<float> ItemScaningUICooldown;
+        public static ConfigEntry<float> FontSize;
         public static ConfigEntry<bool> ShowDebugMode;
         public static ConfigEntry<bool> ShowShipTotalOnShipOnly;
         public static ConfigEntry<bool> ShowTotalOnShipOnly;
@@ -34,6 +35,7 @@ namespace BetterItemScan
             this.LoadConfigs();
             harmony.PatchAll();
         }
+
         private void LoadConfigs()
         {
             BetterItemScanModBase.ShowDebugMode = Config.Bind("Settings", "ShowDebugMode", false, "Shows the change in width of the area to scan");
@@ -41,6 +43,7 @@ namespace BetterItemScan
             BetterItemScanModBase.ShowTotalOnShipOnly = Config.Bind("Settings", "ShowTotalOnShipOnly", false, "Whether or not to show the total scanned in the ship only");
             BetterItemScanModBase.CalculateForQuota = Config.Bind("Settings", "CalculateForQuota", true, "Whether or not to calculate scanned items to see which meet the quota and if any do");
             BetterItemScanModBase.ItemScanRadius = Config.Bind("Settings", "ItemScanRadius", 20f, "The default width is 20");
+            BetterItemScanModBase.FontSize = Config.Bind("Settings", "FontSize", 20f, "The default font size is 20, to make/see this change you may have to do this manually in the config file itself in the bepinex folder");
             BetterItemScanModBase.ItemScaningUICooldown = Config.Bind("Settings", "ItemScaningUICooldown", 3f, "The default value is 5f, how long the ui stays on screen");
             BetterItemScanModBase.AdjustScreenPositionXaxis = Config.Bind("Settings", "AdjustScreenPositionXaxis", 0f, "The default value is 0, you will add or take away from its original position");
             BetterItemScanModBase.AdjustScreenPositionYaxis = Config.Bind("Settings", "AdjustScreenPositionYaxis", 0f, "The default value is 0, you will add or take away from its original position");
