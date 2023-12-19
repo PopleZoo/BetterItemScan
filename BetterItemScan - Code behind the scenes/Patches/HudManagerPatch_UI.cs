@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -80,7 +81,14 @@ namespace BetterItemScan.Patches
 
             return results;
         }
+        static bool IsHexColor(string value)
+        {
+            // Hexadecimal color regex pattern
+            string hexColorPattern = @"^#(?:[0-9a-fA-F]{3}){1,2}$";
 
+            // Check if the input value matches the pattern
+            return Regex.IsMatch(value, hexColorPattern);
+        }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(HUDManager), "PingScan_performed")]
@@ -145,17 +153,49 @@ namespace BetterItemScan.Patches
 
             ItemsDictionary.Clear();
             string itemList = "";
+            string itemText = "";
+
             foreach (var item in items)
             {
-                string itemText = $"{item.headerText}: ${item.scrapValue}";
-                if (!BetterItemScanModBase.CalculateForQuota.Value && meetQuotaItemNames.Contains(item.headerText))
+                itemText = $"{item.headerText}: ${item.scrapValue}";
+                if (BetterItemScanModBase.CalculateForQuota.Value)
                 {
-                    meetQuotaItemNames.Remove(item.headerText);// -_- took way too long to remember this
-                    itemText = "* " + itemText;
+                    if (meetQuotaItemNames.Contains(item.headerText))
+                    {
+                        meetQuotaItemNames.Remove(item.headerText);
+                        // Add rich text color tag to the itemText for items with an asterisk
+                        if (IsHexColor(BetterItemScanModBase.ItemTextCalculatorColorHex.Value))
+                        {
+                            itemText = $"<color={BetterItemScanModBase.ItemTextCalculatorColorHex.Value}>* {itemText}</color>";
+                        }
+                        else
+                        {
+                            Debug.LogError(BetterItemScanModBase.ItemTextCalculatorColorHex.Value+" is an invalid colour. Please remember the'#'");
+                            itemText = $"<color=#FF3333>* {itemText}</color>";
+                        }
+                    }
+                    else
+                    {
+                        if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
+                        {
+                            itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>* {itemText}</color>";
+                        }
+                        else
+                        {
+                            Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the'#'");
+                            itemText = $"<color=#78FFAE>* {itemText}</color>";
+                        }
+                        itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
+                    }
+                }
+                else
+                {
+                    BetterItemScanModBase.ItemTextColorHex.Value.Replace("#", "");
+                    BetterItemScanModBase.ItemTextColorHex.Value = "#" + BetterItemScanModBase.ItemTextColorHex.Value;//just incase someone puts and '#' in the wrong place or forgets it at all for this too. Have to repeat it guh
+                    itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                 }
                 itemList += itemText + "\n";
             }
-
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
             {

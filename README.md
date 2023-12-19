@@ -12,6 +12,7 @@ Config options for:
 - 'ShowTotalOnShipOnly' allows you to see the scanned amount only on the ship
 - 'ItemScanningUICooldown' allows you to adjust how long the UI Stays on screen
 - 'FontSize' allows you to adjust the size of the text on screen. However this may have to be done manually in the Bepinex config folder
+- 'ItemTextColorHex' & 'ItemTextCalculatorColorHex' allows you to change the colour of the text of the UI for items that meet the quota and items by default
 
 recent changes
 - Added config option 'ShowTotalOnShipOnly'
@@ -19,6 +20,7 @@ recent changes
 - Added config option 'ShowOnShipOnly'
 - Added config option 'ItemScanningUICooldown'
 - Added config option 'FontSize'
+- Added colour config options 'ItemTextColorHex' & 'ItemTextCalculatorColorHex'
 
 Small bug fixes
 - no longer being able to peak through walls
@@ -27,6 +29,6 @@ Small bug fixes
 - made the calculating of scrap smarter, added braincells to the scanner
 - forced the calculator to go to school to become smarter
 - the calculator has been tutored
-
+- you can now only scan scrap items not just items with scrap values
 
 Bugs and errors? Head to the Lethal Company Discord -> Mod releases -> Better Item Scan
