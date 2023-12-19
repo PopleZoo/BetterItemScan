@@ -178,20 +178,18 @@ namespace BetterItemScan.Patches
                     {
                         if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
                         {
-                            itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>* {itemText}</color>";
-                        }
-                        else
-                        {
-                            Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the'#'");
-                            itemText = $"<color=#78FFAE> {itemText}</color>";
+                            itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}> {itemText}</color>";
                         }
                         itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                     }
                 }
                 else
                 {
-                    BetterItemScanModBase.ItemTextColorHex.Value.Replace("#", "");
-                    BetterItemScanModBase.ItemTextColorHex.Value = "#" + BetterItemScanModBase.ItemTextColorHex.Value;//just incase someone puts and '#' in the wrong place or forgets it at all for this too. Have to repeat it guh
+                    if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
+                    {
+                        Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the'#'");
+                        itemText = $"<color=#78FFAE> {itemText}</color>";
+                    }
                     itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                 }
                 itemList += itemText + "\n";
