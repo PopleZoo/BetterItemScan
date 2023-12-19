@@ -183,7 +183,7 @@ namespace BetterItemScan.Patches
                         else
                         {
                             Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the'#'");
-                            itemText = $"<color=#78FFAE>* {itemText}</color>";
+                            itemText = $"<color=#78FFAE> {itemText}</color>";
                         }
                         itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                     }
