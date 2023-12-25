@@ -203,10 +203,10 @@ namespace BetterItemScan.Patches
                 }
                 else
                 {
-                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}/nShip Total: {Totalship.ToString()}";
+                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}\nShip Total: {Totalship.ToString()}";
                 }
             }
-            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}/nShip Total: {Totalship.ToString()}";
+            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}\nShip Total: {Totalship.ToString()}";
                         
             if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
             {
