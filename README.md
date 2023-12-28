@@ -21,6 +21,8 @@ recent changes
 - Added config option 'ItemScanningUICooldown'
 - Added config option 'FontSize'
 - Added colour config options 'ItemTextColorHex' & 'ItemTextCalculatorColorHex'
+- UI adjusted so multiple items are shown as 'amount' x 'scrap' - 'price'
+- Adjusted calculator to account for the UI changes. For example if only 2 out 3 items meet the quota for quota calculation, 2 will be shown as meeting the quota and the remaining 1 will be shown as not.
 
 Small bug fixes
 - no longer being able to peak through walls
@@ -30,5 +32,7 @@ Small bug fixes
 - forced the calculator to go to school to become smarter
 - the calculator has been tutored
 - you can now only scan scrap items not just items with scrap values
+- 'total scanned' & 'ship total' now show on a new line and not the same line
 
-Bugs and errors? Head to the Lethal Company Discord -> Mod releases -> Better Item Scan
+Bugs and errors? 
+-Head to the Lethal Company Discord -> Mod releases -> Better Item Scan

@@ -1,4 +1,5 @@
 ﻿
+using DunGen;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System;
@@ -11,6 +12,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 namespace BetterItemScan.Patches
 {
@@ -23,7 +25,8 @@ namespace BetterItemScan.Patches
         private static float Totalsum=0;
         private static float Totalship=0;
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
-        public static List<string> meetQuotaItemNames = new List<string>();
+        public static Dictionary<String, int> meetQuotaItemNames = new Dictionary<string, int>();
+        public static Dictionary<String, int> NotmeetQuotaItemNames = new Dictionary<string, int>();
         public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
 
         public static int MeetQuota(List<int> items, int quota)
@@ -107,18 +110,18 @@ namespace BetterItemScan.Patches
                 HudManagerPatch_UI._textMesh = new TextMeshProUGUI();
 
             List<ScanNodeProperties> items = CalculateLootItems();
-                meetQuotaItemNames.Clear();
-                foreach (var item in items)
-                {
-                    ItemsDictionary.Add(item, item.scrapValue);
-                }
+            meetQuotaItemNames.Clear();
+            foreach (var item in items)
+            {
+                ItemsDictionary.Add(item, item.scrapValue);
+            }
 
-                int quota = TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled;
-                List<int> itemsValues = ItemsDictionary.Values.ToList();
-                itemsValues.Sort();
-                itemsValues.Reverse();
-                int bestIndividualItem = MeetQuota(itemsValues, quota);
-                List<List<int>> bestCombinations = FindCombinations(itemsValues, quota);
+            int quota = TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled;
+            List<int> itemsValues = ItemsDictionary.Values.ToList();
+            itemsValues.Sort();
+            itemsValues.Reverse();
+            int bestIndividualItem = MeetQuota(itemsValues, quota);
+            List<List<int>> bestCombinations = FindCombinations(itemsValues, quota);
 
             // Compare the best individual item to the best combinations
             if (bestCombinations.Any())
@@ -133,7 +136,15 @@ namespace BetterItemScan.Patches
                         ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == bestIndividualItem).Key;
                         if (key != null)
                         {
-                            meetQuotaItemNames.Add(key.headerText);
+                            if (!meetQuotaItemNames.ContainsKey(key.headerText))
+                            {
+                                meetQuotaItemNames.Add(key.headerText, 1);
+                            }
+                            else
+                            {
+                                meetQuotaItemNames[key.headerText]++;
+                                items.Remove(key);
+                            }
                         }
                     }
                 }
@@ -145,55 +156,89 @@ namespace BetterItemScan.Patches
                         ScanNodeProperties key = ItemsDictionary.FirstOrDefault(x => x.Value == combination).Key;
                         if (key != null)
                         {
-                            meetQuotaItemNames.Add(key.headerText);
+                            if (!meetQuotaItemNames.ContainsKey(key.headerText))
+                            {
+                                meetQuotaItemNames.Add(key.headerText, 1);
+                            }
+                            else
+                            {
+                                meetQuotaItemNames[key.headerText]++;
+                                items.Remove(key);
+                            }
                         }
                     }
                 }
             }
+            foreach (var item in ItemsDictionary)
+            {
 
+                if (!NotmeetQuotaItemNames.ContainsKey(item.Key.headerText))
+                {
+                    NotmeetQuotaItemNames.Add(item.Key.headerText, 1);
+                }
+                else
+                {
+                    NotmeetQuotaItemNames[item.Key.headerText]++;
+                    items.Remove(item.Key);
+                }
+            }
             ItemsDictionary.Clear();
             string itemList = "";
             string itemText = "";
-
             foreach (var item in items)
             {
-                itemText = $"{item.headerText}: ${item.scrapValue}";
+
                 if (BetterItemScanModBase.CalculateForQuota.Value)
                 {
-                    if (meetQuotaItemNames.Contains(item.headerText))
+                    if (meetQuotaItemNames.ContainsKey(item.headerText))
                     {
-                        meetQuotaItemNames.Remove(item.headerText);
-                        // Add rich text color tag to the itemText for items with an asterisk
+                        int itemCount = meetQuotaItemNames[item.headerText];
+                        itemText = $"{itemCount}-{item.headerText}: ${item.scrapValue}";
+
+
                         if (IsHexColor(BetterItemScanModBase.ItemTextCalculatorColorHex.Value))
                         {
                             itemText = $"<color={BetterItemScanModBase.ItemTextCalculatorColorHex.Value}>* {itemText}</color>";
                         }
                         else
                         {
-                            Debug.LogError(BetterItemScanModBase.ItemTextCalculatorColorHex.Value+" is an invalid colour. Please remember the'#'");
+                            Debug.LogError(BetterItemScanModBase.ItemTextCalculatorColorHex.Value + " is an invalid colour. Please remember the '#'");
                             itemText = $"<color=#FF3333>* {itemText}</color>";
                         }
                     }
-                    else
+                    else if (NotmeetQuotaItemNames.ContainsKey(item.headerText))
                     {
+                        int itemCount = NotmeetQuotaItemNames[item.headerText];
+                        itemText = $"{itemCount}-{item.headerText}: ${item.scrapValue}";
+
                         if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
                         {
-                            itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}> {itemText}</color>";
+                            itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                         }
-                        itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
+                        else
+                        {
+                            Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the '#'");
+                            itemText = $"<color=#FF3333>* {itemText}</color>";
+                        }
                     }
                 }
                 else
                 {
                     if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
                     {
-                        Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the'#'");
+                        Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the '#'");
                         itemText = $"<color=#78FFAE> {itemText}</color>";
                     }
-                    itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                 }
+
                 itemList += itemText + "\n";
             }
+
+
+
+
+
+
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
             {
@@ -203,10 +248,10 @@ namespace BetterItemScan.Patches
                 }
                 else
                 {
-                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+                    HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}\nShip Total: {Totalship.ToString()}";
                 }
             }
-            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()} Ship Total: {Totalship.ToString()}";
+            else HudManagerPatch_UI._textMesh.text += $"\nTotal Scanned: {Totalsum.ToString()}\nShip Total: {Totalship.ToString()}";
                         
             if (BetterItemScanModBase.ShowTotalOnShipOnly.Value)
             {
