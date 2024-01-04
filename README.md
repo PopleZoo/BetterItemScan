@@ -33,6 +33,7 @@ Small bug fixes
 - the calculator has been tutored
 - you can now only scan scrap items not just items with scrap values
 - 'total scanned' & 'ship total' now show on a new line and not the same line
+- scanning only happened once, it now does so every time
 
 Bugs and errors? 
 -Head to the Lethal Company Discord -> Mod releases -> Better Item Scan

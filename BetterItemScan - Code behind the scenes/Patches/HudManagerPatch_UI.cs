@@ -28,6 +28,7 @@ namespace BetterItemScan.Patches
         public static Dictionary<String, int> meetQuotaItemNames = new Dictionary<string, int>();
         public static Dictionary<String, int> NotmeetQuotaItemNames = new Dictionary<string, int>();
         public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
+        private static List<ScanNodeProperties> items;
 
         public static int MeetQuota(List<int> items, int quota)
         {
@@ -97,6 +98,8 @@ namespace BetterItemScan.Patches
         [HarmonyPatch(typeof(HUDManager), "PingScan_performed")]
         private static void OnScan(HUDManager __instance, InputAction.CallbackContext context)
         {
+
+            Debug.Log("Scan initiated!");
             FieldInfo fieldInfo_2 = typeof(HUDManager).GetField("playerPingingScan", BindingFlags.NonPublic | BindingFlags.Instance);
             var playerPingingScan = (float)fieldInfo_2.GetValue(__instance);
 
@@ -108,9 +111,9 @@ namespace BetterItemScan.Patches
                     HudManagerPatch_UI.CopyValueCounter();
             if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._textMesh)
                 HudManagerPatch_UI._textMesh = new TextMeshProUGUI();
-
-            List<ScanNodeProperties> items = CalculateLootItems();
             meetQuotaItemNames.Clear();
+            NotmeetQuotaItemNames.Clear();
+            items = CalculateLootItems();
             foreach (var item in items)
             {
                 ItemsDictionary.Add(item, item.scrapValue);
@@ -143,7 +146,6 @@ namespace BetterItemScan.Patches
                             else
                             {
                                 meetQuotaItemNames[key.headerText]++;
-                                items.Remove(key);
                             }
                         }
                     }
@@ -163,15 +165,14 @@ namespace BetterItemScan.Patches
                             else
                             {
                                 meetQuotaItemNames[key.headerText]++;
-                                items.Remove(key);
                             }
                         }
                     }
                 }
             }
+
             foreach (var item in ItemsDictionary)
             {
-
                 if (!NotmeetQuotaItemNames.ContainsKey(item.Key.headerText))
                 {
                     NotmeetQuotaItemNames.Add(item.Key.headerText, 1);
@@ -179,10 +180,11 @@ namespace BetterItemScan.Patches
                 else
                 {
                     NotmeetQuotaItemNames[item.Key.headerText]++;
-                    items.Remove(item.Key);
                 }
             }
+
             ItemsDictionary.Clear();
+
             string itemList = "";
             string itemText = "";
             foreach (var item in items)
@@ -234,11 +236,6 @@ namespace BetterItemScan.Patches
                 itemList += itemText + "\n";
             }
 
-
-
-
-
-
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
             {
@@ -273,6 +270,7 @@ namespace BetterItemScan.Patches
             if (HudManagerPatch_UI._totalCounter.activeSelf)
                 return;
             GameNetworkManager.Instance.StartCoroutine(HudManagerPatch_UI.ValueCoroutine());
+            
         }
 
         private static List<ScanNodeProperties> CalculateLootItems()
@@ -283,7 +281,7 @@ namespace BetterItemScan.Patches
             Totalship = (float)list.Sum<GrabbableObject>((Func<GrabbableObject, int>)(scrap => scrap.scrapValue));
             return lootItems;
         }
-        
+
         private static IEnumerator ValueCoroutine()
         {
             HudManagerPatch_UI._totalCounter.SetActive(true);
@@ -291,10 +289,13 @@ namespace BetterItemScan.Patches
             {
                 float displayTimeLeft = HudManagerPatch_UI._displayTimeLeft;
                 HudManagerPatch_UI._displayTimeLeft = 0.0f;
-                yield return (object)new WaitForSeconds(displayTimeLeft);
+                Debug.Log($"Waiting for {displayTimeLeft} seconds...");
+                yield return new WaitForSeconds(displayTimeLeft);
             }
             HudManagerPatch_UI._totalCounter.SetActive(false);
+            Debug.Log("Cooldown complete. Hiding UI.");
         }
+
 
         private static void CopyValueCounter()
         {
