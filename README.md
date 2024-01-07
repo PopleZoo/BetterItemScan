@@ -34,6 +34,8 @@ Small bug fixes
 - you can now only scan scrap items not just items with scrap values
 - 'total scanned' & 'ship total' now show on a new line and not the same line
 - scanning only happened once, it now does so every time
+- turning off 'CalculateForQuota' shows items scanned normallly again
+- duplicate items weren't being removed due to quota calculation testing
 
 Bugs and errors? 
 -Head to the Lethal Company Discord -> Mod releases -> Better Item Scan

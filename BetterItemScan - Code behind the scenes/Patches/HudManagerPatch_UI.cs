@@ -25,8 +25,8 @@ namespace BetterItemScan.Patches
         private static float Totalsum=0;
         private static float Totalship=0;
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
-        public static Dictionary<String, int> meetQuotaItemNames = new Dictionary<string, int>();
-        public static Dictionary<String, int> NotmeetQuotaItemNames = new Dictionary<string, int>();
+        public static Dictionary<String, (float, int)> meetQuotaItemNames = new Dictionary<string, (float, int)>();
+        public static Dictionary<String, (float, int)> NotmeetQuotaItemNames = new Dictionary<string, (float, int)>();
         public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
         private static List<ScanNodeProperties> items;
 
@@ -141,11 +141,13 @@ namespace BetterItemScan.Patches
                         {
                             if (!meetQuotaItemNames.ContainsKey(key.headerText))
                             {
-                                meetQuotaItemNames.Add(key.headerText, 1);
+                                meetQuotaItemNames.Add(key.headerText, (key.scrapValue,1));
                             }
                             else
                             {
-                                meetQuotaItemNames[key.headerText]++;
+                                var existingTuple = meetQuotaItemNames[key.headerText];
+                                meetQuotaItemNames[key.headerText] = (existingTuple.Item1 + key.scrapValue, existingTuple.Item2 + 1);
+                                items.Remove(key);
                             }
                         }
                     }
@@ -160,11 +162,13 @@ namespace BetterItemScan.Patches
                         {
                             if (!meetQuotaItemNames.ContainsKey(key.headerText))
                             {
-                                meetQuotaItemNames.Add(key.headerText, 1);
+                                meetQuotaItemNames.Add(key.headerText, (key.scrapValue, 1));
                             }
                             else
                             {
-                                meetQuotaItemNames[key.headerText]++;
+                                var existingTuple = meetQuotaItemNames[key.headerText];
+                                meetQuotaItemNames[key.headerText] = (existingTuple.Item1 + key.scrapValue, existingTuple.Item2 + 1);
+                                items.Remove(key);
                             }
                         }
                     }
@@ -175,11 +179,15 @@ namespace BetterItemScan.Patches
             {
                 if (!NotmeetQuotaItemNames.ContainsKey(item.Key.headerText))
                 {
-                    NotmeetQuotaItemNames.Add(item.Key.headerText, 1);
+                    // Key doesn't exist, add a new entry with the tuple (0, 1)
+                    NotmeetQuotaItemNames.Add(item.Key.headerText, (item.Key.scrapValue, 1));
                 }
                 else
                 {
-                    NotmeetQuotaItemNames[item.Key.headerText]++;
+                    // Key exists, update the tuple values
+                    var existingTuple = NotmeetQuotaItemNames[item.Key.headerText];
+                    NotmeetQuotaItemNames[item.Key.headerText] = (existingTuple.Item1+ item.Key.scrapValue, existingTuple.Item2 + 1);
+                    items.Remove(item.Key);
                 }
             }
 
@@ -189,15 +197,17 @@ namespace BetterItemScan.Patches
             string itemText = "";
             foreach (var item in items)
             {
-
-                if (BetterItemScanModBase.CalculateForQuota.Value)
+                if (meetQuotaItemNames.ContainsKey(item.headerText))
                 {
-                    if (meetQuotaItemNames.ContainsKey(item.headerText))
+                    (float overallValue, int itemCount) itemInfo;
+
+                    if (meetQuotaItemNames.TryGetValue(item.headerText, out itemInfo))
                     {
-                        int itemCount = meetQuotaItemNames[item.headerText];
-                        itemText = $"{itemCount}-{item.headerText}: ${item.scrapValue}";
-
-
+                        // The key exists, and itemInfo contains the tuple (overallValue, itemCount)
+                        itemText = $"{itemInfo.itemCount}-{item.headerText}: ${itemInfo.overallValue}";
+                    }
+                    if (BetterItemScanModBase.CalculateForQuota.Value)
+                    {
                         if (IsHexColor(BetterItemScanModBase.ItemTextCalculatorColorHex.Value))
                         {
                             itemText = $"<color={BetterItemScanModBase.ItemTextCalculatorColorHex.Value}>* {itemText}</color>";
@@ -208,11 +218,8 @@ namespace BetterItemScan.Patches
                             itemText = $"<color=#FF3333>* {itemText}</color>";
                         }
                     }
-                    else if (NotmeetQuotaItemNames.ContainsKey(item.headerText))
+                    else
                     {
-                        int itemCount = NotmeetQuotaItemNames[item.headerText];
-                        itemText = $"{itemCount}-{item.headerText}: ${item.scrapValue}";
-
                         if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
                         {
                             itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
@@ -223,15 +230,28 @@ namespace BetterItemScan.Patches
                             itemText = $"<color=#FF3333>* {itemText}</color>";
                         }
                     }
+
                 }
-                else
+                else if (NotmeetQuotaItemNames.ContainsKey(item.headerText))
                 {
+                    (float overallValue, int itemCount) itemInfo;
+
+                    if (NotmeetQuotaItemNames.TryGetValue(item.headerText, out itemInfo))
+                    {
+                        // The key exists, and itemInfo contains the tuple (overallValue, itemCount)
+                        itemText = $"{itemInfo.itemCount}-{item.headerText}: ${itemInfo.overallValue}";
+                    }
+
                     if (IsHexColor(BetterItemScanModBase.ItemTextColorHex.Value))
                     {
-                        Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the '#'");
-                        itemText = $"<color=#78FFAE> {itemText}</color>";
+                        itemText = $"<color={BetterItemScanModBase.ItemTextColorHex.Value}>{itemText}</color>";
                     }
-                }
+                    else
+                    {
+                        Debug.LogError(BetterItemScanModBase.ItemTextColorHex.Value + " is an invalid colour. Please remember the '#'");
+                        itemText = $"<color=#FF3333>* {itemText}</color>";
+                    }
+                }            
 
                 itemList += itemText + "\n";
             }
@@ -302,6 +322,7 @@ namespace BetterItemScan.Patches
             GameObject gameObject = GameObject.Find("/Systems/UI/Canvas/IngamePlayerHUD/BottomMiddle/ValueCounter");
             if (!(bool)(UnityEngine.Object)gameObject)
                 BetterItemScanModBase.Instance.mls.LogError((object)"Failed to find ValueCounter object to copy!");
+
             HudManagerPatch_UI._totalCounter = UnityEngine.Object.Instantiate<GameObject>(gameObject.gameObject, gameObject.transform.parent, false);
             Vector3 localPosition = HudManagerPatch_UI._totalCounter.transform.localPosition;
             float adjustedX = Mathf.Clamp(localPosition.x + BetterItemScanModBase.AdjustScreenPositionXaxis.Value + 50f, -6000f, Screen.width);
@@ -323,10 +344,6 @@ namespace BetterItemScan.Patches
             Vector3 textLocalPosition = textRectTransform.localPosition;
             textRectTransform.localPosition = new Vector3(textLocalPosition.x, textLocalPosition.y - 140f, textLocalPosition.z);
         }
-
-
-
-
 
     }
 }

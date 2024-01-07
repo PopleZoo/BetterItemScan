@@ -1,6 +1,6 @@
 {
   "name": "BetterItemScan",
-  "version_number": "2.1.8",
+  "version_number": "3.0.0",
   "website_url": "https://github.com/PopleZoo/BetterItemScan",
   "description": "Better Item Scan makes it easier to scan a group of items to see the price of each of them listed as well as their combined total. Now with a built in smart quota calculator and UI adjustment",
   "dependencies": [ ]
