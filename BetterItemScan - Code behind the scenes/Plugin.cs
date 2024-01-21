@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace BetterItemScan
 {
@@ -29,6 +30,7 @@ namespace BetterItemScan
         public static ConfigEntry<bool> CalculateForQuota;
         public static ConfigEntry<string> ItemTextColorHex;
         public static ConfigEntry<string> ItemTextCalculatorColorHex;
+        public static ConfigEntry<bool> logAllScannedItems;
 
         private void Awake()
         {
@@ -45,6 +47,7 @@ namespace BetterItemScan
             BetterItemScanModBase.ShowShipTotalOnShipOnly = Config.Bind("Settings", "ShowShipTotalOnShipOnly", false, "Whether or not to show the ship's total only in the ship");
             BetterItemScanModBase.ShowTotalOnShipOnly = Config.Bind("Settings", "ShowTotalOnShipOnly", false, "Whether or not to show the total scanned in the ship only");
             BetterItemScanModBase.CalculateForQuota = Config.Bind("Settings", "CalculateForQuota", true, "Whether or not to calculate scanned items to see which meet the quota and if any do");
+            BetterItemScanModBase.logAllScannedItems = Config.Bind("Settings", "logAllScannedItems", true, "outputs all scanned items and prices in the console");
             BetterItemScanModBase.ItemScanRadius = Config.Bind("Settings", "ItemScanRadius", 20f, "The default width is 20");
             BetterItemScanModBase.FontSize = Config.Bind("Settings", "FontSize", 20f, "The default font size is 20, to make/see this change you may have to do this manually in the config file itself in the bepinex folder");
             BetterItemScanModBase.ItemTextColorHex = Config.Bind("Settings", "ItemTextColorHex", "#78FFAE", "The default text color for items that have been scanned, value must be a hexadecimal");

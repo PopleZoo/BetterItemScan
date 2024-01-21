@@ -100,6 +100,7 @@ namespace BetterItemScan.Patches
         {
 
             Debug.Log("Scan initiated!");
+            ItemsDictionary.Clear();
             FieldInfo fieldInfo_2 = typeof(HUDManager).GetField("playerPingingScan", BindingFlags.NonPublic | BindingFlags.Instance);
             var playerPingingScan = (float)fieldInfo_2.GetValue(__instance);
 
@@ -111,6 +112,13 @@ namespace BetterItemScan.Patches
                     HudManagerPatch_UI.CopyValueCounter();
             if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._textMesh)
                 HudManagerPatch_UI._textMesh = new TextMeshProUGUI();
+
+            if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._totalCounter || !(bool)(UnityEngine.Object)HudManagerPatch_UI._textMesh)
+            {
+                BetterItemScanModBase.Instance.mls.LogError((object)"Failed to find or instantiate UI objects!");
+                return;
+            }
+
             meetQuotaItemNames.Clear();
             NotmeetQuotaItemNames.Clear();
             items = CalculateLootItems();
@@ -255,7 +263,7 @@ namespace BetterItemScan.Patches
 
                 itemList += itemText + "\n";
             }
-
+            
             HudManagerPatch_UI._textMesh.text = itemList;
             if (BetterItemScanModBase.ShowShipTotalOnShipOnly.Value)
             {
@@ -284,7 +292,13 @@ namespace BetterItemScan.Patches
 
                 }
             }
+            if (BetterItemScanModBase.logAllScannedItems.Value)
+            {
+                Debug.Log("''''");
+                Debug.Log("BetterItemScan - log of all items scanned" + "\n" + HudManagerPatch_UI._textMesh.text);
+                Debug.Log("''''");
 
+            }
 
             HudManagerPatch_UI._displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
             if (HudManagerPatch_UI._totalCounter.activeSelf)
@@ -295,7 +309,27 @@ namespace BetterItemScan.Patches
 
         private static List<ScanNodeProperties> CalculateLootItems()
         {
-            List<GrabbableObject> list = ((IEnumerable<GrabbableObject>)GameObject.Find("/Environment/HangarShip").GetComponentsInChildren<GrabbableObject>()).Where<GrabbableObject>((Func<GrabbableObject, bool>)(obj => obj.name != "ClipboardManual" && obj.name != "StickyNoteItem")).ToList<GrabbableObject>();
+            List<GrabbableObject> list = ((IEnumerable<GrabbableObject>)GameObject.Find("/Environment/HangarShip").GetComponentsInChildren<GrabbableObject>())
+            .Where(obj =>
+            {
+                if (obj.name == "ClipboardManual" || obj.name == "StickyNoteItem")
+                    return false;
+
+                if (obj.name == "GiftBoxItem")
+                {
+                    GiftBoxItem giftBoxItem = obj.GetComponent<GiftBoxItem>();
+                    if (giftBoxItem != null)
+                    {
+                        FieldInfo fieldInfo = typeof(GiftBoxItem).GetField("hasUsedGift", BindingFlags.NonPublic | BindingFlags.Instance);
+                        bool hasUsedGift = (bool)fieldInfo.GetValue(giftBoxItem);
+                        return !hasUsedGift;
+                    }
+                }
+
+                return true;
+            })
+            .ToList();
+
             List<ScanNodeProperties> lootItems = scannedNodeObjects.Where(obj => obj.headerText != "ClipboardManual" && obj.headerText != "StickyNoteItem" && obj.scrapValue != 0).ToList();
             Totalsum = (float)lootItems.Sum<ScanNodeProperties>((Func<ScanNodeProperties, int>)(scrap => scrap.scrapValue));
             Totalship = (float)list.Sum<GrabbableObject>((Func<GrabbableObject, int>)(scrap => scrap.scrapValue));

@@ -22,7 +22,8 @@ recent changes
 - Added config option 'FontSize'
 - Added colour config options 'ItemTextColorHex' & 'ItemTextCalculatorColorHex'
 - UI adjusted so multiple items are shown as 'amount' x 'scrap' - 'price'
-- Adjusted calculator to account for the UI changes. For example if only 2 out 3 items meet the quota for quota calculation, 2 will be shown as meeting the quota and the remaining 1 will be shown as not.
+- Adjusted calculator to account for the UI changes. For example if only 2 out 3 items meet the quota for quota calculation, 2 will be shown as meeting the quota and the remaining 1 will be shown as not
+- Added config option 'logAllScannedItems' that allows you to output the log of your scanned items into the output log
 
 Small bug fixes
 - no longer being able to peak through walls
@@ -36,6 +37,7 @@ Small bug fixes
 - scanning only happened once, it now does so every time
 - turning off 'CalculateForQuota' shows items scanned normallly again
 - duplicate items weren't being removed due to quota calculation testing
+- GiftBoxItem (presents/gifts) are no longer calculated when on the ship if used to get its held item
 
 Bugs and errors? 
--Head to the Lethal Company Discord -> Mod releases -> Better Item Scan
+-Head to the Lethal Company Discord(s) -> Mod releases -> Better Item Scan
