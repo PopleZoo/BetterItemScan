@@ -13,6 +13,16 @@ namespace BetterItemScan.Patches
         static LineRenderer lineRenderer;
         static GameObject lineObject;
         static float maxDistance = 80f;
+        private static MethodInfo methodInfo;
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(HUDManager), "Awake")]
+        static void AssignNewNodes_methodFetcher(HUDManager __instance)
+        {
+            // Fetching the private method 'AttemptScanNode'
+            methodInfo = typeof(HUDManager).GetMethod("AttemptScanNode", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(HUDManager), "AssignNewNodes")]
@@ -38,10 +48,6 @@ namespace BetterItemScan.Patches
 
             FieldInfo fieldInfo_3 = typeof(HUDManager).GetField("scanNodesHit", BindingFlags.NonPublic | BindingFlags.Instance);
             var _scanNodesHit = fieldInfo_3.GetValue(__instance) as RaycastHit[];
-
-            // Fetching the private method 'AttemptScanNode'
-            MethodInfo methodInfo = typeof(HUDManager).GetMethod("AttemptScanNode", BindingFlags.NonPublic | BindingFlags.Instance);
-
             int num = Physics.SphereCastNonAlloc(new Ray(playerScript.gameplayCamera.transform.position + playerScript.gameplayCamera.transform.forward * 20f, playerScript.gameplayCamera.transform.forward), BetterItemScanModBase.ItemScanRadius.Value, _scanNodesHit, maxDistance, LayerMask.GetMask("ScanNode"));
 
             Vector3 origin = new Vector3(playerScript.gameplayCamera.transform.position.x, playerScript.gameplayCamera.transform.position.y - 2f, playerScript.gameplayCamera.transform.position.z) + playerScript.gameplayCamera.transform.forward;

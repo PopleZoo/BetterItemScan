@@ -13,7 +13,7 @@ namespace BetterItemScan
     {
         private const string modGUID = "PopleZoo.BetterItemScan";
         private const string modName = "Better Item Scan";
-        private const string modVersion = "2.1.0.0";
+        private const string modVersion = "3.0.0.2";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static BetterItemScanModBase Instance;
         public ManualLogSource mls;

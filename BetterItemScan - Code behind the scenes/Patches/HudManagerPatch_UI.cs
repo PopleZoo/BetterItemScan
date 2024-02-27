@@ -22,14 +22,22 @@ namespace BetterItemScan.Patches
         private static GameObject _totalCounter;
         private static TextMeshProUGUI _textMesh;
         private static float _displayTimeLeft = BetterItemScanModBase.ItemScaningUICooldown.Value;
-        private static float Totalsum=0;
-        private static float Totalship=0;
+        private static float Totalsum = 0;
+        private static float Totalship = 0;
         public static List<ScanNodeProperties> scannedNodeObjects = new List<ScanNodeProperties>();
         public static Dictionary<String, (float, int)> meetQuotaItemNames = new Dictionary<string, (float, int)>();
         public static Dictionary<String, (float, int)> NotmeetQuotaItemNames = new Dictionary<string, (float, int)>();
         public static Dictionary<ScanNodeProperties, int> ItemsDictionary = new Dictionary<ScanNodeProperties, int>();
         private static List<ScanNodeProperties> items;
+        private static MethodInfo methodInfo;
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(HUDManager), "Awake")]
+        private static void OnStart(HUDManager __instance)
+        {
+            methodInfo = typeof(HUDManager).GetMethod("CanPlayerScan", BindingFlags.NonPublic | BindingFlags.Instance);
+        }
+         
         public static int MeetQuota(List<int> items, int quota)
         {
             // Filter out items that are smaller than the quota
@@ -93,19 +101,17 @@ namespace BetterItemScan.Patches
             // Check if the input value matches the pattern
             return Regex.IsMatch(value, hexColorPattern);
         }
+              
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(HUDManager), "PingScan_performed")]
         private static void OnScan(HUDManager __instance, InputAction.CallbackContext context)
         {
-
-            Debug.Log("Scan initiated!");
-            ItemsDictionary.Clear();
             FieldInfo fieldInfo_2 = typeof(HUDManager).GetField("playerPingingScan", BindingFlags.NonPublic | BindingFlags.Instance);
             var playerPingingScan = (float)fieldInfo_2.GetValue(__instance);
 
-            MethodInfo methodInfo = typeof(HUDManager).GetMethod("CanPlayerScan", BindingFlags.NonPublic | BindingFlags.Instance);
-
+            ItemsDictionary.Clear();
+            
             if ((UnityEngine.Object)GameNetworkManager.Instance.localPlayerController == (UnityEngine.Object)null || !context.performed || !(bool)methodInfo.Invoke(__instance,null) || (double)playerPingingScan > -1.0)
                 return;
             if (!(bool)(UnityEngine.Object)HudManagerPatch_UI._totalCounter)
@@ -379,5 +385,6 @@ namespace BetterItemScan.Patches
             textRectTransform.localPosition = new Vector3(textLocalPosition.x, textLocalPosition.y - 140f, textLocalPosition.z);
         }
 
+        
     }
 }
