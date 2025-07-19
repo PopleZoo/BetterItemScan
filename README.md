@@ -40,4 +40,4 @@ Small bug fixes
 - GiftBoxItem (presents/gifts) are no longer calculated when on the ship if used to get its held item
 
 Bugs and errors? 
--Head to the Lethal Company Discord(s) -> Mod releases -> Better Item Scan
+-Head to the Repo and leave an issue
